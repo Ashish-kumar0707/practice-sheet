@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Practice sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --ink:#18262B; --muted:#5E6E72; --line:#D5DCD8;
+  --solved:#2E7D6B; --solved-soft:#CFE6DE; --trying:#C98A1B; --trying-soft:#F3E3C2; --empty:#E1E7E3;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A1C; --surface:#1A2427; --ink:#E4ECEA; --muted:#93A4A6; --line:#2C3A3D;
+    --solved:#4FB39A; --solved-soft:#1F3D36; --trying:#E0A33A; --trying-soft:#3D3220; --empty:#24302F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A1C; --surface:#1A2427; --ink:#E4ECEA; --muted:#93A4A6; --line:#2C3A3D;
+  --solved:#4FB39A; --solved-soft:#1F3D36; --trying:#E0A33A; --trying-soft:#3D3220; --empty:#24302F;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+main{max-width:860px;margin:0 auto;padding:40px 20px 64px}
+.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+header h1{font-size:clamp(1.7rem,4.5vw,2.4rem);line-height:1.15;margin:0 0 8px;letter-spacing:-0.015em;font-weight:700}
+header p{margin:0;color:var(--muted);max-width:62ch}
+
+/* progress drawn as a segment tree over the problem list */
+.treewrap{margin:28px 0 10px;overflow-x:auto}
+.tree{display:grid;gap:3px;grid-template-columns:repeat(var(--n),minmax(8px,1fr));min-width:320px}
+.node{border-radius:3px;background:var(--empty);min-height:22px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.node .fill{position:absolute;top:0;bottom:0;left:0;background:var(--solved-soft);transition:width .35s ease}
+.node span{position:relative;white-space:nowrap}
+.node.root span{color:var(--ink);font-size:12px}
+.leaf{border:0;padding:0;min-height:30px;cursor:pointer;transition:background .2s}
+.leaf.solved{background:var(--solved)}
+.leaf.trying{background:var(--trying)}
+.leaf:hover{filter:brightness(.92)}
+.leaf:focus-visible,.status:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+.legend .tip{margin-left:auto}
+
+.tabs{display:flex;flex-wrap:wrap;gap:2px 4px;border-bottom:1px solid var(--line);margin:26px 0 0}
+.tab{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:10px 12px;font:inherit;font-size:.95rem;
+  color:var(--muted);cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:baseline}
+.tab .c{font-size:.78rem;font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--solved);font-weight:600}
+.tab:hover{color:var(--ink)}
+.tab:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+#intro{margin:14px 0 0;color:var(--muted);max-width:62ch}
+section{margin-top:40px}
+section h2{font-size:1.15rem;margin:0 0 2px;display:flex;gap:10px;align-items:baseline;font-weight:650}
+section h2 .num{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+section h2 .count{margin-left:auto;font-size:.85rem;color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+section > p{margin:0 0 12px;color:var(--muted);font-size:.93rem;max-width:65ch}
+
+ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;padding:12px 4px;border-bottom:1px solid var(--line)}
+li.flash{animation:flash 1.4s ease}
+@keyframes flash{0%{background:var(--trying-soft)}100%{background:transparent}}
+
+.status{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;
+  display:grid;place-items:center;padding:0;margin-top:1px;transition:background .2s,border-color .2s}
+.status svg{width:14px;height:14px;opacity:0}
+.status[data-s="trying"]{border-color:var(--trying);background:var(--trying-soft)}
+.status[data-s="trying"]::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--trying)}
+.status[data-s="solved"]{border-color:var(--solved);background:var(--solved)}
+.status[data-s="solved"] svg{opacity:1}
+
+.title a{color:var(--ink);font-weight:600;text-decoration:none}
+.title a:hover{text-decoration:underline;text-underline-offset:3px}
+li.is-solved .title a{color:var(--muted)}
+.from{color:var(--muted);font-size:.82rem;margin-left:6px}
+details{margin-top:2px}
+summary{cursor:pointer;color:var(--muted);font-size:.86rem;width:max-content;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+ ";}
+details[open] summary::before{content:"\2212  ";}
+details p{margin:4px 0 0;font-size:.92rem;max-width:62ch}
+
+.meta{text-align:right;font-size:12px;color:var(--muted);white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:3px}
+.diff{display:flex;gap:3px}
+.diff i{display:block;width:5px;height:12px;border-radius:1px;background:var(--line)}
+.diff i.on{background:var(--muted)}
+
+footer{margin-top:48px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.reset{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+.reset.armed{border-color:var(--trying);color:var(--ink)}
+
+@media (max-width:560px){
+  main{padding:28px 16px 48px}
+  li{gap:10px}
+  .legend .tip{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Practice sheet</h1>
+    <p>The topics that matter for OAs and interviews, from CSES and LeetCode, in a suggested order within each topic. Hints stay folded until you open them.</p>
+  </header>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <p id="intro"></p>
+
+  <div class="treewrap"><div class="tree" id="tree" aria-label="Progress, drawn as a segment tree over the problems"></div></div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--solved)"></i>Solved</span>
+    <span><i class="sw" style="background:var(--trying)"></i>Trying</span>
+    <span><i class="sw" style="background:var(--empty)"></i>Not started</span>
+    <span class="tip">Each bar counts the solved problems below it. Tap a leaf to jump to it.</span>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>
+    <span>Progress is saved in this browser.</span>
+    <button class="reset" id="reset" type="button">Clear progress</button>
+  </footer>
+</main>
+
+<script>
+const C = (id, name, d, hint, from) => ({ site: "cses", id, name, d, hint, from });
+const L = (id, slug, name, d, hint) => ({ site: "lc", id, slug, name, d, hint });
+
+const TOPICS = [
+ { key: "arr", name: "Arrays", intro: "Two pointers, sliding window and prefix sums with hashing. These show up in almost every OA.", groups: [
+  { title: "Two pointers", note: "Sort first, then move two indices toward each other.", items: [
+    C(1640, "Sum of Two Values", 1, "Keep a map of value to index while scanning. Or sort (value, index) pairs and use two pointers."),
+    C(1641, "Sum of Three Values", 1, "Fix the first element, then run two pointers on the rest of the sorted array. O(n²)."),
+    L(42, "trapping-rain-water", "Trapping Rain Water", 2, "Water at i = min(max on left, max on right) − h[i]. Move the pointer on the side with the smaller max.")
+  ]},
+  { title: "Sliding window", note: "Grow the right end, shrink the left end while the window breaks a rule.", items: [
+    C(1660, "Subarray Sums I", 1, "All values are positive, so shrink from the left while the sum is too big."),
+    C(1141, "Playlist", 1, "Longest window with no repeats. Store each song's last position and jump the left end past it."),
+    L(76, "minimum-window-substring", "Minimum Window Substring", 3, "Expand until the window covers t, then shrink while it still does. Track how many characters are satisfied."),
+    L(992, "subarrays-with-k-different-integers", "Subarrays with K Different Integers", 3, "Exactly k = at most k − at most (k − 1). 'At most k distinct' is a normal window.")
+  ]},
+  { title: "Prefix sums and hashing", note: "When values can be negative, a window no longer works.", items: [
+    C(1661, "Subarray Sums II", 2, "Count earlier prefix sums equal to prefix − x with a hash map."),
+    C(1662, "Subarray Divisibility", 2, "Count prefix sums by remainder. Keep it non-negative: ((p % n) + n) % n."),
+    L(41, "first-missing-positive", "First Missing Positive", 2, "Swap each value v in 1..n into index v − 1, then find the first index that doesn't match.")
+  ]}
+ ]},
+
+ { key: "bs", name: "Binary search", intro: "Search on a sorted array, and the more common OA form: binary search on the answer with a greedy check.", groups: [
+  { title: "On a sorted array", note: "Keep the invariant clear and the loop condition simple.", items: [
+    L(33, "search-in-rotated-sorted-array", "Search in Rotated Sorted Array", 1, "One half around mid is always sorted. Check whether the target lies inside that half."),
+    L(4, "median-of-two-sorted-arrays", "Median of Two Sorted Arrays", 3, "Binary search the cut in the shorter array so the two left parts together hold half of all elements.")
+  ]},
+  { title: "On the answer", note: "If x works, every larger x works too. Find the boundary.", items: [
+    L(875, "koko-eating-bananas", "Koko Eating Bananas", 1, "Binary search the speed k. Hours needed = sum of ceil(p / k)."),
+    C(1620, "Factory Machines", 1, "Binary search the time t. Products made = sum of t / k[i]. Stop summing once it reaches the target to avoid overflow."),
+    L(1482, "minimum-number-of-days-to-make-m-bouquets", "Minimum Number of Days to Make m Bouquets", 2, "Binary search the day. Greedily count runs of k bloomed flowers."),
+    C(1085, "Array Division", 2, "Binary search the largest part sum. Greedily count how many parts that limit needs.")
+  ]},
+  { title: "Finding the k-th value", note: "Binary search a value and count how many items are at most it.", items: [
+    C(2422, "Multiplication Table", 2, "Binary search x. Row i has min(n, x / i) entries that are at most x."),
+    L(719, "find-k-th-smallest-pair-distance", "Find K-th Smallest Pair Distance", 3, "Binary search the distance d. Count pairs within d using two pointers on the sorted array.")
+  ]}
+ ]},
+
+ { key: "stack", name: "Stacks", intro: "Plain stacks, monotonic stacks for nearest smaller or larger elements, and monotonic deques for windows.", groups: [
+  { title: "Stack basics", note: "Last in, first out.", items: [
+    L(20, "valid-parentheses", "Valid Parentheses", 1, "Push opening brackets. Each closing bracket must match the top of the stack."),
+    C(1645, "Nearest Smaller Values", 1, "Pop while the top is at least the current value. Whatever is left on top is the answer."),
+    L(739, "daily-temperatures", "Daily Temperatures", 1, "Keep indices still waiting for a warmer day. Pop them when one arrives.")
+  ]},
+  { title: "Monotonic stack", note: "Each element's range of influence ends at the nearest smaller element on each side.", items: [
+    L(84, "largest-rectangle-in-histogram", "Largest Rectangle in Histogram", 2, "Find the nearest smaller bar on both sides. Width = right − left − 1."),
+    L(907, "sum-of-subarray-minimums", "Sum of Subarray Minimums", 2, "a[i] is the minimum of (i − prev smaller) × (next smaller − i) subarrays. Use < on one side and ≤ on the other for duplicates."),
+    L(402, "remove-k-digits", "Remove K Digits", 2, "Keep digits increasing: pop larger digits while removals remain. Strip leading zeros at the end."),
+    C(1147, "Maximum Building I", 3, "Build column heights row by row, then solve Largest Rectangle in Histogram for each row.", "Additional Problems I")
+  ]},
+  { title: "Monotonic deque", note: "The same idea with elements leaving from the front.", items: [
+    C(3221, "Sliding Window Minimum", 1, "Deque of indices with increasing values. Drop the front once it leaves the window.", "Sliding Window Problems"),
+    L(239, "sliding-window-maximum", "Sliding Window Maximum", 2, "Same deque as Sliding Window Minimum, with decreasing values.")
+  ]}
+ ]},
+
+ { key: "greedy", name: "Greedy and heaps", intro: "Interval scheduling, exchange arguments, and heaps for always picking the current best.", groups: [
+  { title: "Intervals", note: "Usually sort by start or by end. Deciding which is the problem.", items: [
+    L(56, "merge-intervals", "Merge Intervals", 1, "Sort by start. Extend the last merged interval while the next one overlaps it."),
+    C(1629, "Movie Festival", 1, "Sort by end time and always take the movie that ends first."),
+    C(1164, "Room Allocation", 2, "Sort by arrival. Keep a min-heap of (departure, room) and reuse the earliest-free room if it's free in time.")
+  ]},
+  { title: "Exchange arguments", note: "Prove that swapping two neighbours never makes the order better.", items: [
+    C(1630, "Tasks and Deadlines", 1, "Reward = sum of deadlines − sum of finish times. Do shorter tasks first."),
+    L(621, "task-scheduler", "Task Scheduler", 2, "The most frequent task fixes the frame: (maxCount − 1) × (n + 1) + tasks with maxCount. Take the max with the task count.")
+  ]},
+  { title: "Heaps", note: "Keep the best candidate available in O(log n).", items: [
+    L(23, "merge-k-sorted-lists", "Merge k Sorted Lists", 2, "Min-heap holding the current head of each list."),
+    L(295, "find-median-from-data-stream", "Find Median from Data Stream", 2, "Max-heap for the lower half, min-heap for the upper half. Keep sizes within one."),
+    C(1076, "Sliding Window Median", 3, "Two multisets for the lower and upper halves, rebalanced as the window moves.", "Sliding Window Problems"),
+    L(502, "ipo", "IPO", 3, "Sort projects by capital. Push affordable profits into a max-heap and take the best, k times."),
+    L(871, "minimum-number-of-refueling-stops", "Minimum Number of Refueling Stops", 3, "Drive as far as you can. When fuel runs out, refuel at the largest station already passed.")
+  ]}
+ ]},
+
+ { key: "graph", name: "Graphs", intro: "Traversal, shortest paths, DAGs, DSU and connectivity. CSES Graph Algorithms is the core, with a few LeetCode twists.", groups: [
+  { title: "Traversal", note: "BFS for shortest steps, DFS for exploring components.", items: [
+    C(1192, "Counting Rooms", 1, "Start a DFS or BFS from each unvisited floor cell. Count the starts."),
+    C(1193, "Labyrinth", 1, "BFS from A. Store the direction you came from, then walk back from B to rebuild the path."),
+    L(994, "rotting-oranges", "Rotting Oranges", 1, "Multi-source BFS: put every rotten orange in the queue at the start."),
+    C(1668, "Building Teams", 1, "Bipartite check: two-colour with BFS. A conflict means IMPOSSIBLE. Handle every component.")
+  ]},
+  { title: "Shortest paths", note: "Dijkstra, Bellman-Ford and Floyd–Warshall, and when to use each.", items: [
+    C(1671, "Shortest Routes I", 2, "Dijkstra with a min-heap. Skip popped entries whose distance is outdated."),
+    C(1195, "Flight Discount", 2, "Dijkstra on (city, coupon used), or Dijkstra from 1 and from n on the reversed graph, then try each edge as the discounted one."),
+    L(787, "cheapest-flights-within-k-stops", "Cheapest Flights Within K Stops", 2, "Bellman-Ford for k + 1 rounds, copying the distance array each round."),
+    C(1672, "Shortest Routes II", 2, "Floyd–Warshall: try every k as a middle city. Guard against INF + INF overflow.")
+  ]},
+  { title: "DAGs", note: "Topological order turns graph problems into DP.", items: [
+    C(1679, "Course Schedule", 1, "Kahn's algorithm: repeatedly take a node with in-degree 0. Leftover nodes mean a cycle."),
+    C(1680, "Longest Flight Route", 2, "Process in topological order. dp[v] = longest path from 1 to v. Keep parents to print the route.")
+  ]},
+  { title: "DSU and MST", note: "Union-find for merging components.", items: [
+    C(1676, "Road Construction", 2, "DSU with union by size. Track the component count and largest size after each road."),
+    C(1675, "Road Reparation", 2, "Kruskal: sort edges by cost and keep those that join two components.")
+  ]},
+  { title: "Connectivity", note: "Bridges and strongly connected components.", items: [
+    L(1192, "critical-connections-in-a-network", "Critical Connections in a Network", 3, "Tarjan's bridges: edge (u, v) is a bridge if low[v] > tin[u]."),
+    C(1683, "Planets and Kingdoms", 3, "Strongly connected components with Kosaraju or Tarjan. Label each node with its component.")
+  ]}
+ ]},
+
+ { key: "tree", name: "Trees", intro: "Tree DP, binary lifting and LCA, and rerooting. Interviews love binary trees; OAs love general trees.", groups: [
+  { title: "Basics", note: "Recursion that returns something useful.", items: [
+    C(1674, "Subordinates", 1, "DFS and return subtree size. The answer for a node is its size − 1."),
+    L(236, "lowest-common-ancestor-of-a-binary-tree", "Lowest Common Ancestor of a Binary Tree", 1, "If both sides return a node, this node is the LCA. Otherwise pass up whichever side found something."),
+    L(297, "serialize-and-deserialize-binary-tree", "Serialize and Deserialize Binary Tree", 2, "Preorder with a marker for null. Read it back with the same recursion.")
+  ]},
+  { title: "Tree DP", note: "Combine children's answers at each node.", items: [
+    C(1131, "Tree Diameter", 1, "BFS from any node to the farthest node, then BFS again from that node."),
+    L(124, "binary-tree-maximum-path-sum", "Binary Tree Maximum Path Sum", 2, "Return the best downward path. Update the answer with left + node + right, ignoring negative sides."),
+    C(1130, "Tree Matching", 2, "dp[v][0/1] = best matching in v's subtree with v free or matched to a child."),
+    L(968, "binary-tree-cameras", "Binary Tree Cameras", 3, "Each node reports: needs cover, has a camera, or is covered. Place cameras greedily from the leaves up.")
+  ]},
+  { title: "Binary lifting and LCA", note: "Jump by powers of two.", items: [
+    C(1687, "Company Queries I", 2, "up[v][j] = 2^j-th boss. Jump by the set bits of k."),
+    C(1688, "Company Queries II", 2, "Lift the deeper node to the same depth, then lift both while their ancestors differ."),
+    C(1135, "Distance Queries", 2, "dist(a, b) = depth[a] + depth[b] − 2 × depth[lca].")
+  ]},
+  { title: "Rerooting", note: "Compute the answer for every root in O(n).", items: [
+    C(1132, "Tree Distances I", 2, "The farthest node from any vertex is one of the two diameter endpoints."),
+    C(1133, "Tree Distances II", 3, "ans[child] = ans[parent] + n − 2 × size[child].")
+  ]}
+ ]},
+
+ { key: "str", name: "Strings", intro: "Prefix function, Z-function, palindromes, tries and hashing.", groups: [
+  { title: "Pattern matching", note: "Learn one of KMP or Z well; they solve the same problems.", items: [
+    C(1753, "String Matching", 1, "Prefix function or Z-function on pattern + '#' + text. Count positions equal to the pattern length."),
+    C(1732, "Finding Borders", 2, "The prefix function at the last index is the longest border. Follow the links for the rest."),
+    C(1733, "Finding Periods", 2, "Z-function: p is a period if p + z[p] reaches the end of the string.")
+  ]},
+  { title: "Palindromes", note: "Expand around centres, then do it in linear time.", items: [
+    L(5, "longest-palindromic-substring", "Longest Palindromic Substring", 1, "Expand around each centre, both odd and even lengths. O(n²) is fine here."),
+    C(1111, "Longest Palindrome", 2, "n is 1e6, so you need Manacher's algorithm or hashing with binary search.")
+  ]},
+  { title: "Tries", note: "A tree of prefixes.", items: [
+    L(208, "implement-trie-prefix-tree", "Implement Trie (Prefix Tree)", 1, "Each node has 26 children and an end-of-word flag."),
+    C(1731, "Word Combinations", 2, "dp[i] = ways to build the suffix starting at i. Walk the trie from position i."),
+    L(212, "word-search-ii", "Word Search II", 3, "Put the words in a trie and DFS the board once, following trie edges. Remove found words to prune.")
+  ]},
+  { title: "Hashing", note: "Compare substrings in O(1).", items: [
+    L(1044, "longest-duplicate-substring", "Longest Duplicate Substring", 3, "Binary search the length. Check for a repeated substring of that length with a rolling hash.")
+  ]}
+ ]},
+
+ { key: "math", name: "Math", intro: "Modular arithmetic, divisors and counting. Short to code once you know the trick.", groups: [
+  { title: "Modular arithmetic", note: "Fast powers and their uses.", items: [
+    C(1095, "Exponentiation", 1, "Exponentiation by squaring, mod 1e9+7. Remember 0^0 = 1."),
+    C(1712, "Exponentiation II", 2, "a^(b^c) mod p: compute b^c mod (p − 1) first, by Fermat's little theorem."),
+    C(1722, "Fibonacci Numbers", 2, "n goes up to 1e18, so raise the matrix [[1,1],[1,0]] to a power.")
+  ]},
+  { title: "Divisors and primes", note: "Sieves and counting multiples.", items: [
+    C(1618, "Trailing Zeros", 1, "Count factors of 5: n/5 + n/25 + n/125 + …", "Introductory Problems"),
+    C(1713, "Counting Divisors", 1, "Sieve the smallest prime factor up to 1e6, then factor each number quickly."),
+    C(1081, "Common Divisors", 2, "For each d, count array values that are multiples of d. The answer is the largest d with count ≥ 2.")
+  ]},
+  { title: "Counting", note: "Combinatorics and inclusion–exclusion.", items: [
+    C(1079, "Binomial Coefficients", 1, "Precompute factorials and inverse factorials mod p."),
+    C(1716, "Distributing Apples", 1, "Stars and bars: C(n + m − 1, n − 1)."),
+    C(2185, "Prime Multiples", 2, "Inclusion–exclusion over subsets of the k primes. Stop a product early once it exceeds n."),
+    L(1201, "ugly-number-iii", "Ugly Number III", 3, "Binary search the answer. Count multiples with inclusion–exclusion using lcm.")
+  ]}
+ ]},
+
+ { key: "bt", name: "Backtracking", intro: "Try every option, undo, and prune early. Common in interviews, rarer in OAs.", groups: [
+  { title: "Generate everything", note: "Small n, full search.", items: [
+    C(1622, "Creating Strings", 1, "Sort the string and use next_permutation, or backtrack over character counts.", "Introductory Problems"),
+    C(1623, "Apple Division", 1, "n ≤ 20: try all 2^n subsets.", "Introductory Problems"),
+    L(39, "combination-sum", "Combination Sum", 1, "Recurse with a start index so combinations come out in order. You may reuse the same index."),
+    L(131, "palindrome-partitioning", "Palindrome Partitioning", 2, "At each position, try every palindromic prefix and recurse on the rest.")
+  ]},
+  { title: "Search with pruning", note: "Cut branches that can't succeed.", items: [
+    C(1624, "Chessboard and Queens", 1, "One queen per row. Track used columns and both diagonals.", "Introductory Problems"),
+    L(79, "word-search", "Word Search", 2, "DFS from each cell. Mark cells on the way in and unmark them on the way out."),
+    L(37, "sudoku-solver", "Sudoku Solver", 3, "Track used digits per row, column and box. Fill empty cells in order and undo on conflict."),
+    C(1625, "Grid Path Description", 3, "Prune hard: stop on reaching the end early, and stop if the path would split the grid into two parts.", "Introductory Problems")
+  ]}
+ ]},
+
+ { key: "dp", name: "DP", intro: "10 LeetCode problems covering the patterns CSES skips or only touches lightly: state machines, tree DP, DP with binary search and interval DP.", groups: [
+  { title: "Classic patterns", note: "One-dimensional states and knapsack, the most common OA shapes.", items: [
+    L(300, "longest-increasing-subsequence", "Longest Increasing Subsequence", 1, "dp[i] = longest subsequence ending at i, in O(n²). Then try the O(n log n) version with binary search."),
+    L(416, "partition-equal-subset-sum", "Partition Equal Subset Sum", 1, "0/1 knapsack: can you reach total/2? Loop the sums downward so each number is used once."),
+    L(139, "word-break", "Word Break", 1, "dp[i] = can the first i characters be split. Check every word that could end at i."),
+    L(1048, "longest-string-chain", "Longest String Chain", 2, "Sort words by length. dp[word] = 1 + best dp of any word made by deleting one letter.")
+  ]},
+  { title: "States and trees", note: "The state needs more than an index.", items: [
+    L(309, "best-time-to-buy-and-sell-stock-with-cooldown", "Best Time to Buy and Sell Stock with Cooldown", 2, "Three states per day: holding, just sold, resting. Write the transitions between them."),
+    L(337, "house-robber-iii", "House Robber III", 2, "Each node returns two values: best if this node is robbed, and best if it isn't."),
+    L(1235, "maximum-profit-in-job-scheduling", "Maximum Profit in Job Scheduling", 3, "Sort by end time. Either skip the job, or take it plus the best answer before its start (binary search).")
+  ]},
+  { title: "Interval and string DP", note: "dp over a range [l, r] or over two strings at once.", items: [
+    L(10, "regular-expression-matching", "Regular Expression Matching", 3, "dp[i][j] = does s[i:] match p[j:]. A '*' either uses zero copies, or matches one character and stays on the same pattern."),
+    L(312, "burst-balloons", "Burst Balloons", 3, "Choose which balloon in [l, r] bursts last. Pad the array with 1 on both ends."),
+    L(1547, "minimum-cost-to-cut-a-stick", "Minimum Cost to Cut a Stick", 3, "Add 0 and n to the cuts and sort. dp over pairs of cuts: segment length plus the best split.")
+  ]}
+ ]},
+
+ { key: "digit", name: "Digit DP", intro: "Counting numbers up to a bound, one digit at a time with a tight flag. Counting Numbers from CSES is the template.", groups: [
+  { title: "Getting comfortable", note: "Small states: tight flag plus one extra value.", items: [
+    L(357, "count-numbers-with-unique-digits", "Count Numbers with Unique Digits", 1, "Plain counting works, but redo it as digit DP with a mask of used digits for practice."),
+    L(600, "non-negative-integers-without-consecutive-ones", "Non-negative Integers without Consecutive Ones", 2, "Digit DP on the binary form of n. The extra state is the previous bit."),
+    L(902, "numbers-at-most-n-given-digit-set", "Numbers At Most N Given Digit Set", 2, "Count shorter numbers directly, then walk the digits of n with a tight flag."),
+    L(233, "number-of-digit-one", "Number of Digit One", 2, "State: position, tight, and the count of ones so far. Return the total ones, not the count of numbers."),
+    C(2220, "Counting Numbers", 2, "Tight flags for both bounds plus a started flag for leading zeros.", "Dynamic Programming")
+  ]},
+  { title: "Harder states", note: "Masks, sums and string bounds.", items: [
+    L(1012, "numbers-with-repeated-digits", "Numbers With Repeated Digits", 3, "Count numbers whose digits are all distinct (mask of used digits), then subtract from n."),
+    L(2719, "count-of-integers", "Count of Integers", 3, "Answer = f(num2) − f(num1) + check num1 itself. Keep the digit sum so far in the state."),
+    L(2801, "count-stepping-numbers-in-range", "Count Stepping Numbers in Range", 3, "Like Counting Numbers: previous digit plus a started flag. Bounds come as strings.")
+  ]}
+ ]},
+
+ { key: "mask", name: "Bitmask DP", intro: "n is about 20 or less, so the state is a subset. Elevator Rides and Counting Tilings from CSES are the two shapes to recognise.", groups: [
+  { title: "Choosing a subset", note: "dp[mask] over the items already used.", items: [
+    L(526, "beautiful-arrangement", "Beautiful Arrangement", 1, "dp[mask] = ways to fill the first popcount(mask) positions using the numbers in mask."),
+    L(698, "partition-to-k-equal-sum-subsets", "Partition to K Equal Sum Subsets", 2, "dp[mask] = fill of the current bucket. Same shape as Elevator Rides."),
+    L(1986, "minimum-number-of-work-sessions-to-finish-the-tasks", "Minimum Number of Work Sessions to Finish the Tasks", 2, "Elevator Rides with a different story: dp[mask] = (sessions, time in the last session)."),
+    C(1653, "Elevator Rides", 2, "dp[mask] = (rides, weight in the current ride), compared as a pair.", "Dynamic Programming"),
+    L(1125, "smallest-sufficient-team", "Smallest Sufficient Team", 3, "The mask is over skills, not people. For each person, OR in their skills. Store the team itself.")
+  ]},
+  { title: "Paths over subsets", note: "Mask of visited nodes plus the current node.", items: [
+    L(847, "shortest-path-visiting-all-nodes", "Shortest Path Visiting All Nodes", 2, "BFS over (node, visited mask), starting from every node at once."),
+    C(1690, "Hamiltonian Flights", 3, "dp[mask][v] = paths from city 1 through mask ending at v. Skip masks without city 1.", "Graph Algorithms"),
+    L(943, "find-the-shortest-superstring", "Find the Shortest Superstring", 3, "TSP: dp[mask][last]. The cost of adding a word is the part that doesn't overlap the previous one.")
+  ]},
+  { title: "Row by row", note: "The mask describes one row or column, like Counting Tilings.", items: [
+    C(2181, "Counting Tilings", 3, "Column by column. The mask is the cells already filled by dominoes sticking out.", "Dynamic Programming"),
+    L(1349, "maximum-students-taking-exam", "Maximum Students Taking Exam", 3, "Mask = seats used in a row. Check broken seats, side neighbours and diagonals against the previous row's mask.")
+  ]}
+ ]},
+
+ { key: "seg", name: "Segment trees", intro: "33 CSES problems in a suggested order, from a plain sum tree up to persistent trees.", groups: [
+  { title: "Point update, range query", note: "The basic tree. Get one template working and reuse it everywhere.", items: [
+    C(1647, "Static Range Minimum Queries", 1, "Build a min tree and query. A sparse table also works since there are no updates."),
+    C(1648, "Dynamic Range Sum Queries", 1, "Point update, range sum. Values go up to 1e9, so use long long."),
+    C(1649, "Dynamic Range Minimum Queries", 1, "Same as the sum tree, with min as the merge and a large identity value."),
+    C(1650, "Range Xor Queries", 1, "Merge with XOR. Prefix XOR alone also solves it."),
+    C(1651, "Range Update Queries", 1, "Range add with point query: store differences, so a point query becomes a prefix sum.")
+  ]},
+  { title: "Walking down the tree", note: "Instead of querying a range, descend from the root to find a position.", items: [
+    C(1143, "Hotel Queries", 2, "Max tree. Go left if the left child's max is at least x, otherwise go right."),
+    C(1749, "List Removals", 2, "Store 1 for each remaining element. Find the k-th one by descending on counts."),
+    C(2163, "Josephus Problem II", 2, "Same k-th-element descent as List Removals, with the step taken mod the remaining count.", "Sorting and Searching")
+  ]},
+  { title: "Custom node merges", note: "Each node stores a few values, and the merge function does the real work.", items: [
+    C(2166, "Prefix Sum Queries", 2, "Node keeps (sum, best prefix). Best prefix = max(left.best, left.sum + right.best)."),
+    C(1190, "Subarray Sum Queries", 2, "Node keeps (sum, best prefix, best suffix, best). The answer is the root's best."),
+    C(3226, "Subarray Sum Queries II", 2, "Same node as above, but merge the nodes covering [a, b] in order."),
+    C(2206, "Pizzeria Queries", 2, "Split by side: cost is p[i] - i to the left and p[i] + i to the right. Keep two min trees."),
+    C(1188, "Bit Inversions", 3, "Longest run of equal bits with flips. Node keeps prefix run, suffix run and best run.", "Additional Problems I")
+  ]},
+  { title: "Compression and counting", note: "Index the tree by value, not by position.", items: [
+    C(1748, "Increasing Subsequence II", 2, "dp[i] = 1 + sum of dp over smaller values seen so far. Sum tree over compressed values.", "Dynamic Programming"),
+    C(3314, "Mountain Range", 2, "Process mountains by height. dp[i] = 1 + max dp inside the range between the nearest taller ones.", "Dynamic Programming"),
+    C(1144, "Salary Queries", 2, "Compress all salaries, including values from future updates and query bounds. Count tree over values."),
+    C(2169, "Nested Ranges Count", 2, "Sort by left end, ties by longer first. Count earlier right ends that are at least yours.", "Sorting and Searching"),
+    C(3223, "Sliding Window Inversions", 3, "Fenwick tree over values. Update the inversion count as one element leaves and one enters.", "Sliding Window Problems")
+  ]},
+  { title: "Offline queries", note: "Read all queries first, sort them, and sweep.", items: [
+    C(1734, "Distinct Values Queries", 3, "Sort queries by right end. Keep a 1 only at each value's latest position."),
+    C(3356, "Distinct Values Queries II", 3, "Store the next occurrence of each element. A range is distinct if the min next occurrence lies past b."),
+    C(3163, "Range Interval Queries", 3, "Split each query into two prefix queries and sweep positions with a Fenwick tree over values."),
+    C(2416, "Increasing Array Queries", 3, "Go from right to left with a monotonic stack. Keep the cost contributed by each block in a tree."),
+    C(3304, "Visible Buildings Queries", 3, "Think about the next taller building to the right, then answer queries offline.")
+  ]},
+  { title: "Lazy propagation", note: "Range updates. Push pending changes down only when you need to.", items: [
+    C(1735, "Range Updates and Sums", 3, "Two lazy tags: add and assign. Assign clears any pending add."),
+    C(1736, "Polynomial Queries", 3, "The update adds an arithmetic progression. Lazy tag stores (first term, step).")
+  ]},
+  { title: "On trees and strings", note: "Turn the structure into an array, then use a normal tree.", items: [
+    C(1137, "Subtree Queries", 2, "Euler tour: each subtree becomes a contiguous range.", "Tree Algorithms"),
+    C(1138, "Path Queries", 2, "Euler tour. Changing a node's value adds to its whole subtree range.", "Tree Algorithms"),
+    C(2134, "Path Queries II", 3, "Heavy-light decomposition plus a max tree.", "Tree Algorithms"),
+    C(2420, "Palindrome Queries", 3, "Keep string hashes in two trees, one forward and one reversed.", "String Algorithms")
+  ]},
+  { title: "Advanced", note: "New structures built on the same idea.", items: [
+    C(1739, "Forest Queries II", 2, "2D Fenwick tree with point updates."),
+    C(1737, "Range Queries and Copies", 3, "Persistent segment tree: an update creates new nodes only along one path."),
+    C(1741, "Area of Rectangles", 3, "Sweep line over x. The tree tracks how much of the y axis is covered.", "Geometry"),
+    C(2184, "Missing Coin Sum Queries", 3, "Group coins by powers of two and repeat the missing-coin-sum argument per group.")
+  ]}
+ ]}
+];
+
+const KEY = "cses-segtree-sheet-v1";
+const SEEDS = [[1, { 3314: "solved", 1748: "solved" }], [2, { 2220: "solved", 1653: "solved", 2181: "solved" }]];
+let state = {};
+try { const raw = localStorage.getItem(KEY); state = raw ? JSON.parse(raw) : {}; } catch (e) { state = {}; }
+SEEDS.forEach(([v, s]) => { if ((state.__seed || 0) < v) { Object.assign(state, s); state.__seed = v; } });
+save();
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+const keyOf = it => it.site === "cses" ? String(it.id) : "lc-" + it.id;
+const urlOf = it => it.site === "cses" ? `https://cses.fi/problemset/task/${it.id}` : `https://leetcode.com/problems/${it.slug}/`;
+const tagOf = it => it.site === "cses" ? `CSES ${it.id}` : `LC ${it.id}`;
+const NEXT = { undefined: "trying", trying: "solved", solved: undefined };
+const LABEL = { undefined: "Not started", trying: "Trying", solved: "Solved" };
+const check = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+let active = "arr";
+try { const t = localStorage.getItem(KEY + "-tab"); if (TOPICS.some(x => x.key === t)) active = t; } catch (e) {}
+
+const tabsEl = document.getElementById("tabs");
+const sectionsEl = document.getElementById("sections");
+const treeEl = document.getElementById("tree");
+let ORDER = [], nodes = [];
+
+TOPICS.forEach(t => {
+  const b = document.createElement("button");
+  b.className = "tab"; b.type = "button"; b.setAttribute("role", "tab"); b.dataset.key = t.key;
+  b.innerHTML = `${t.name}<span class="c"></span>`;
+  b.addEventListener("click", () => { active = t.key; try { localStorage.setItem(KEY + "-tab", active); } catch (e) {} build(); });
+  tabsEl.appendChild(b);
+});
+
+function build(){
+  const topic = TOPICS.find(t => t.key === active);
+  document.getElementById("intro").textContent = topic.intro;
+  ORDER = []; topic.groups.forEach(g => g.items.forEach(it => ORDER.push(it)));
+
+  sectionsEl.innerHTML = "";
+  topic.groups.forEach((g, gi) => {
+    const sec = document.createElement("section");
+    sec.innerHTML = `<h2><span class="num">${gi + 1}</span>${g.title}<span class="count" data-g="${gi}"></span></h2><p>${g.note}</p>`;
+    const ul = document.createElement("ul");
+    g.items.forEach(it => {
+      const k = keyOf(it);
+      const li = document.createElement("li");
+      li.id = "p-" + k;
+      li.innerHTML = `
+        <button class="status" type="button" data-k="${k}">${check}</button>
+        <div>
+          <div class="title"><a href="${urlOf(it)}" target="_blank" rel="noopener">${it.name}</a>${it.from ? `<span class="from">${it.from}</span>` : ""}</div>
+          <details><summary>Hint</summary><p>${it.hint}</p></details>
+        </div>
+        <div class="meta"><span class="mono">${tagOf(it)}</span><span class="diff" title="Difficulty ${it.d} of 3">${[1,2,3].map(n => `<i class="${n <= it.d ? "on" : ""}"></i>`).join("")}</span></div>`;
+      ul.appendChild(li);
+    });
+    sec.appendChild(ul);
+    sectionsEl.appendChild(sec);
+  });
+
+  const N = ORDER.length;
+  nodes = []; let maxDepth = 0;
+  (function b(l, r, depth){
+    maxDepth = Math.max(maxDepth, depth);
+    nodes.push({ l, r, depth });
+    if (l === r) return;
+    const m = (l + r) >> 1;
+    b(l, m, depth + 1); b(m + 1, r, depth + 1);
+  })(0, N - 1, 0);
+
+  treeEl.innerHTML = "";
+  treeEl.style.setProperty("--n", N);
+  nodes.forEach(nd => {
+    const leaf = nd.l === nd.r;
+    const el = document.createElement(leaf ? "button" : "div");
+    el.className = "node mono" + (leaf ? " leaf" : "") + (nd.depth === 0 ? " root" : "");
+    el.style.gridColumn = `${nd.l + 1} / ${nd.r + 2}`;
+    el.style.gridRow = leaf ? `${nd.depth + 1} / ${maxDepth + 2}` : `${nd.depth + 1}`;
+    if (leaf) {
+      el.type = "button";
+      el.addEventListener("click", () => {
+        const li = document.getElementById("p-" + keyOf(ORDER[nd.l]));
+        li.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+        li.classList.remove("flash"); void li.offsetWidth; li.classList.add("flash");
+      });
+    } else {
+      el.innerHTML = '<div class="fill"></div><span></span>';
+    }
+    nd.el = el;
+    treeEl.appendChild(el);
+  });
+  render();
+}
+
+sectionsEl.addEventListener("click", e => {
+  const b = e.target.closest(".status");
+  if (!b) return;
+  const k = b.dataset.k;
+  const nxt = NEXT[state[k]];
+  if (nxt) state[k] = nxt; else delete state[k];
+  save(); render();
+});
+
+function render(){
+  const topic = TOPICS.find(t => t.key === active);
+
+  tabsEl.querySelectorAll(".tab").forEach(b => {
+    const t = TOPICS.find(x => x.key === b.dataset.key);
+    const all = t.groups.flatMap(g => g.items);
+    const done = all.filter(it => state[keyOf(it)] === "solved").length;
+    b.querySelector(".c").textContent = `${done}/${all.length}`;
+    b.setAttribute("aria-selected", t.key === active ? "true" : "false");
+  });
+
+  sectionsEl.querySelectorAll(".status").forEach(b => {
+    const s = state[b.dataset.k];
+    if (s) b.dataset.s = s; else delete b.dataset.s;
+    const name = b.closest("li").querySelector(".title a").textContent;
+    b.setAttribute("aria-label", `${name}: ${LABEL[s]}. Change status`);
+    b.title = LABEL[s] + " (click to change)";
+    b.closest("li").classList.toggle("is-solved", s === "solved");
+  });
+
+  topic.groups.forEach((g, gi) => {
+    const done = g.items.filter(it => state[keyOf(it)] === "solved").length;
+    sectionsEl.querySelector(`.count[data-g="${gi}"]`).textContent = `${done} / ${g.items.length}`;
+  });
+
+  const solvedAt = ORDER.map(it => state[keyOf(it)] === "solved" ? 1 : 0);
+  nodes.forEach(nd => {
+    if (nd.l === nd.r) {
+      const it = ORDER[nd.l];
+      const s = state[keyOf(it)];
+      nd.el.className = "node mono leaf" + (s ? " " + s : "") + (nd.depth === 0 ? " root" : "");
+      nd.el.setAttribute("aria-label", `${it.name}: ${LABEL[s]}`);
+      nd.el.title = `${it.name} (${LABEL[s]})`;
+      return;
+    }
+    let sum = 0;
+    for (let i = nd.l; i <= nd.r; i++) sum += solvedAt[i];
+    const total = nd.r - nd.l + 1;
+    nd.el.querySelector(".fill").style.width = (100 * sum / total) + "%";
+    nd.el.querySelector("span").textContent = nd.depth === 0 ? `${sum} of ${total} solved` : (total >= 4 ? `${sum}/${total}` : "");
+    nd.el.title = `Problems ${nd.l + 1} to ${nd.r + 1}: ${sum} of ${total} solved`;
+  });
+}
+
+build();
+
+const resetBtn = document.getElementById("reset");
+let armTimer;
+resetBtn.addEventListener("click", () => {
+  if (!resetBtn.classList.contains("armed")) {
+    resetBtn.classList.add("armed");
+    resetBtn.textContent = "Click again to clear";
+    armTimer = setTimeout(() => { resetBtn.classList.remove("armed"); resetBtn.textContent = "Clear progress"; }, 3000);
+    return;
+  }
+  clearTimeout(armTimer);
+  state = { __seed: SEEDS.length }; save(); render();
+  resetBtn.classList.remove("armed"); resetBtn.textContent = "Clear progress";
+});
+</script>
+</body>
+</html>
